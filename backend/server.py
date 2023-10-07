@@ -6,6 +6,9 @@ import os
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov'}
 
+if not os.path.exists(UPLOAD_FOLDER):
+  os.makedirs(UPLOAD_FOLDER)
+
 app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -31,7 +34,7 @@ def upload_file():
     # Proceed with analysis
     return jsonify(success=True, filepath=filepath)
   else:
-    return jsonify(error="File type not allowed"), 400
+    return jsonify(success=False, message="File type not allowed"), 400
 
 if __name__ == '__main__':
   app.run(debug=True)
