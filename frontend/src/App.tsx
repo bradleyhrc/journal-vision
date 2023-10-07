@@ -7,6 +7,11 @@ function App() {
   const { isLoading, user, isAuthenticated, loginWithRedirect } = useAuth0();
   if (isLoading) return <></>;
 
+  fetch("http://127.0.0.1:5000/")
+  .then(response => response.text())
+  .then(data => console.log(data))
+  .catch(error => console.error("Error connecting to server:", error));
+
   return (
     <AppWrap>
       Welcome {isAuthenticated && user ? user.name : "you"}
