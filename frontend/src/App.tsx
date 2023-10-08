@@ -3,9 +3,13 @@ import styled from 'styled-components';
 
 import { useAuth0 } from '@auth0/auth0-react';
 
+import VideoPlayer from './VideoPlayer';
+
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [prompt, setPrompt] = useState('');
+  const [video, setVideo] = useState(null);
+  const [startTime, setStartTime] = useState(0);
 
   const handlePromptChange = (event: any) => {
     setPrompt(event.target.value);
@@ -44,7 +48,11 @@ function App() {
         method: 'GET'
     })
     .then(response => response.json())
-    .then(data => console.log(data))
+    .then(data => {
+      console.log(data);
+      setVideo(data["File_Path"]);
+      setStartTime(data["Start_Time"]);
+    })
     .catch(error => console.error("Error getting match:", error));
   };
 
@@ -58,8 +66,12 @@ function App() {
       }
       <br />
       <input type="file" onChange={handleFileChange} accept=".mp4, .mov" />
+      <button onClick={handleUpload}>Upload Video</button>
       <input type="text" value={prompt} onChange={handlePromptChange} placeholder="Enter your prompt"/>
       <button onClick={getMatch}>Prompt</button>
+      {video && (
+        <VideoPlayer file_path={video} start_time={startTime} />
+      )}
     </AppWrap>
   );
 }

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
@@ -50,8 +50,6 @@ def find_match():
   if not prompt:
     return jsonify(error="No prompt provided"), 400
 
-  prompt = "torture"
-
   df = pd.read_csv("videos_data.csv")
 
   df["combined"] = df["Transcript"] + " " + df["Video_Labels"]
@@ -60,11 +58,32 @@ def find_match():
   tfidf_matrix = vectorizer.fit_transform(df["combined"])
 
   prompt_vector = vectorizer.transform([prompt])
+  print(prompt_vector)
   cosine_similarities = cosine_similarity(prompt_vector, tfidf_matrix).flatten()
   closest_index = cosine_similarities.argmax()
+  print(cosine_similarities) # [0,0,0,0.316]
 
   closest_data = df.iloc[closest_index].to_dict()
   return jsonify(closest_data)
+
+@app.route('/api/stream_video', methods=['GET'])
+def stream_video():
+  file_path = request.args.get('file_path')
+  if not file_path:
+    return jsonify(error="No file path provided"), 400
+
+  directory, filename = os.path.split(file_path)
+
+  def generate():
+    with open(file_path, "rb") as video_file:
+      chunk_size = 4096
+      while True:
+        chunk = video_file.read(chunk_size)
+        if len(chunk) == 0:
+          break
+        yield chunk
+  
+  return Response(stream_with_context(generate()), content_type='video/mp4')
 
 if __name__ == '__main__':
   app.run(debug=True)

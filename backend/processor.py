@@ -84,7 +84,7 @@ def process_video_for_analysis(input_path, segment_duration=25):
     if video_duration <= segment_duration:
       print(f"Processing fragment 1: 0 - {clip.duration} seconds")
       res = analyze_fragment(clip)
-      flat_labels = "; ".join([f"{label[0]}: {label[1]}" for label in res["video_labels"]])
+      flat_labels = " ".join([label[0] for label in res["video_labels"]])
       cumulative_data.append([input_path, 1, 0, clip.duration, res["transcript"], res["audio_conf"], flat_labels])
       save_to_csv(cumulative_data)
       return
@@ -106,7 +106,7 @@ def process_video_for_analysis(input_path, segment_duration=25):
       fragment = clip.subclip(start_time, end_time)
       res = analyze_fragment(fragment)
 
-      flat_labels = "; ".join([f"{label[0]}: {label[1]}" for label in res["video_labels"]])
+      flat_labels = " ".join([label[0] for label in res["video_labels"]])
 
       cumulative_data.append([input_path, i+1, start_time, end_time, res["transcript"], res["audio_conf"], flat_labels])
       #print(analyze_fragment(fragment))
