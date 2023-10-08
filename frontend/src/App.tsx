@@ -5,6 +5,12 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [prompt, setPrompt] = useState('');
+
+  const handlePromptChange = (event: any) => {
+    setPrompt(event.target.value);
+  };
+
   const { isLoading, user, isAuthenticated, loginWithRedirect } = useAuth0();
 
   useEffect(() => {
@@ -33,6 +39,15 @@ function App() {
     .catch(error => console.error("Error uploading file:", error));
   };
 
+  const getMatch = () => {
+    fetch(`http://127.0.0.1:5000/api/match?prompt=${prompt}`, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error("Error getting match:", error));
+  };
+
   return (
     <AppWrap>
       Welcome {isAuthenticated && user ? user.name : "you"}
@@ -43,7 +58,8 @@ function App() {
       }
       <br />
       <input type="file" onChange={handleFileChange} accept=".mp4, .mov" />
-      <button onClick={handleUpload}>Upload Video</button>
+      <input type="text" value={prompt} onChange={handlePromptChange} placeholder="Enter your prompt"/>
+      <button onClick={getMatch}>Prompt</button>
     </AppWrap>
   );
 }

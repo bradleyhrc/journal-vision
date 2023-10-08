@@ -2,6 +2,8 @@ from moviepy.editor import VideoFileClip
 from google.cloud import speech
 from google.cloud import videointelligence
 import os
+from helper import save_to_csv
+
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "journal-vision.json"
 
 # audio
@@ -32,11 +34,10 @@ def analyze_fragment(fragment):
   )
   response = client.recognize(config=config, audio=audio)
   
-  transcript = ",".join([result.alternatives[0].transcript for result in response.results])
+  transcript = " ".join([result.alternatives[0].transcript for result in response.results])
   confidence = [result.alternatives[0].confidence for result in response.results]
   avg_confidence = sum(confidence) / len(confidence)
   os.remove(audio_file_path)
-  print(response)
 
   # visual
   video_temp_path = "temp_video.mp4"
@@ -82,11 +83,13 @@ def process_video_for_analysis(input_path, segment_duration=25):
 
     if video_duration <= segment_duration:
       print(f"Processing fragment 1: 0 - {clip.duration} seconds")
-      print(analyze_fragment(clip))
+      res = analyze_fragment(clip)
+      flat_labels = "; ".join([f"{label[0]}: {label[1]}" for label in res["video_labels"]])
+      cumulative_data.append([input_path, 1, 0, clip.duration, res["transcript"], res["audio_conf"], flat_labels])
+      save_to_csv(cumulative_data)
       return
 
     segment_count = int(video_duration // segment_duration) + 1
-    print(segment_count)
 
     remainder = video_duration % segment_duration
     if remainder < segment_duration * 0.5:
@@ -103,7 +106,9 @@ def process_video_for_analysis(input_path, segment_duration=25):
       fragment = clip.subclip(start_time, end_time)
       res = analyze_fragment(fragment)
 
-      cumulative_data.append([input_path, i+1, start_time, end_time, res["transcript"], res["audio_conf"], res["video_labels"]])
+      flat_labels = "; ".join([f"{label[0]}: {label[1]}" for label in res["video_labels"]])
+
+      cumulative_data.append([input_path, i+1, start_time, end_time, res["transcript"], res["audio_conf"], flat_labels])
       #print(analyze_fragment(fragment))
   
-  print(cumulative_data)
+    save_to_csv(cumulative_data)
