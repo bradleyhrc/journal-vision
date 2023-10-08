@@ -36,6 +36,7 @@ def analyze_fragment(fragment):
   confidence = [result.alternatives[0].confidence for result in response.results]
   avg_confidence = sum(confidence) / len(confidence)
   os.remove(audio_file_path)
+  print(response)
 
   # visual
   video_temp_path = "temp_video.mp4"
@@ -48,28 +49,34 @@ def analyze_fragment(fragment):
     request={"features": features, "input_content": input_content}
   )
   print("Processing video for label detection...")
-  result = operation.result(timeout=30)
+  result = operation.result(timeout=55)
 
   os.remove(video_temp_path)
 
   segment_labels = result.annotation_results[0].segment_label_annotations
-  labels = [label.entity.description for label in segment_labels]
-
-  print(segment_labels)
+  #print(segment_labels)
+  labels = []
+  for annotation in segment_labels:
+    for segment in annotation.segments:
+      confidence = round(segment.confidence, 2)
+      labels.append(
+        [annotation.entity.description, confidence]
+      )
 
   return {
     "transcript": transcript,
-    "conf": round(avg_confidence, 2),
-    "video_labels": ", ".join(labels)
+    "audio_conf": round(avg_confidence, 2),
+    "video_labels": labels
   }
 
-def process_video_for_analysis(input_path, segment_duration=20):
+def process_video_for_analysis(input_path, segment_duration=25):
   """
   Splits a video into segments of given duration and analyzes each fragment.
   
   :param input_path: Path to the input video.
-  :param segment_duration: Duration of each segment in seconds (default: 40 seconds).
+  :param segment_duration: Duration of each segment in seconds (default: 25 seconds).
   """
+  cumulative_data = []
   with VideoFileClip(input_path) as clip:
     video_duration = clip.duration
 
@@ -78,10 +85,11 @@ def process_video_for_analysis(input_path, segment_duration=20):
       print(analyze_fragment(clip))
       return
 
-    segment_count = int(video_duration // segment_duration);
+    segment_count = int(video_duration // segment_duration) + 1
+    print(segment_count)
 
     remainder = video_duration % segment_duration
-    if 0 < remainder < segment_duration:
+    if remainder < segment_duration * 0.5:
       segment_count -= 1
 
     for i in range(segment_count):
@@ -93,4 +101,9 @@ def process_video_for_analysis(input_path, segment_duration=20):
       
       print(f"Processing fragment {i + 1}/{segment_count}: {start_time} - {end_time} seconds")
       fragment = clip.subclip(start_time, end_time)
-      print(analyze_fragment(fragment))
+      res = analyze_fragment(fragment)
+
+      cumulative_data.append([input_path, i+1, start_time, end_time, res["transcript"], res["audio_conf"], res["video_labels"]])
+      #print(analyze_fragment(fragment))
+  
+  print(cumulative_data)
