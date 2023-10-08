@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
+from processor import process_video_for_analysis
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov'}
@@ -32,6 +33,7 @@ def upload_file():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     # Proceed with analysis
+    process_video_for_analysis(filepath)
     return jsonify(success=True, filepath=filepath)
   else:
     return jsonify(success=False, message="File type not allowed"), 400

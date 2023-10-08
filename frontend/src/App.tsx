@@ -3,8 +3,6 @@ import styled from 'styled-components';
 
 import { useAuth0 } from '@auth0/auth0-react';
 
-
-
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const { isLoading, user, isAuthenticated, loginWithRedirect } = useAuth0();
@@ -44,7 +42,7 @@ function App() {
       <></>
       }
       <br />
-      <input type="file" onChange={handleFileChange} accept=".mp4" />
+      <input type="file" onChange={handleFileChange} accept=".mp4, .mov" />
       <button onClick={handleUpload}>Upload Video</button>
     </AppWrap>
   );
