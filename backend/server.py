@@ -7,6 +7,8 @@ from processor import process_video_for_analysis
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from functools import partial
+
 import pandas as pd
 
 UPLOAD_FOLDER = 'uploads'
@@ -72,18 +74,40 @@ def stream_video():
   if not file_path:
     return jsonify(error="No file path provided"), 400
 
-  directory, filename = os.path.split(file_path)
+  range_header = request.headers.get('Range', None)
+  video_size = os.path.getsize(file_path)
 
-  def generate():
-    with open(file_path, "rb") as video_file:
-      chunk_size = 4096
-      while True:
-        chunk = video_file.read(chunk_size)
-        if len(chunk) == 0:
-          break
-        yield chunk
-  
-  return Response(stream_with_context(generate()), content_type='video/mp4')
+  if not range_header:
+    response = Response(
+      open(file_path, 'rb').read(),
+      content_type='video/mp4',
+      direct_passthrough=True
+    )
+    response.headers.add('Content-Length', str(video_size))
+    return response
+
+  start, end = range_header.split('=')[1].split('-')
+  start = int(start)
+  end = int(end) if end else video_size - 1
+  length = end - start + 1
+
+  response = Response(
+    read_file(file_path, start, length),
+    status=206,
+    content_type='video/mp4',
+    direct_passthrough=True
+  )
+  response.headers.add('Content-Range', 'bytes {0}-{1}/{2}'.format(start, end, video_size))
+  response.headers.add('Accept-Ranges', 'bytes')
+  response.headers.add('Content-Length', str(length))
+
+  return response;
+
+def read_file(file, offset, length):
+  with open(file, 'rb') as f:
+    f.seek(offset)
+    chunk = f.read(length)
+    yield chunk
 
 if __name__ == '__main__':
   app.run(debug=True)
