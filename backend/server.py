@@ -63,7 +63,7 @@ def find_match():
   print(prompt_vector)
   cosine_similarities = cosine_similarity(prompt_vector, tfidf_matrix).flatten()
   closest_index = cosine_similarities.argmax()
-  print(cosine_similarities) # [0,0,0,0.316]
+  print(cosine_similarities)
 
   closest_data = df.iloc[closest_index].to_dict()
   return jsonify(closest_data)

@@ -50,7 +50,7 @@ def analyze_fragment(fragment):
     request={"features": features, "input_content": input_content}
   )
   print("Processing video for label detection...")
-  result = operation.result(timeout=55)
+  result = operation.result(timeout=80)
 
   os.remove(video_temp_path)
 
